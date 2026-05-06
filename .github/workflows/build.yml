@@ -1,16 +1,16 @@
 name: Build Swiss QR Scanner – alle Plattformen
-
+ 
 on:
   push:
     branches: [ main, master ]
   workflow_dispatch:
-
+ 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   JAVA_VERSION: '21'
-
+ 
 jobs:
-
+ 
   # ════════════════════════════════════════════════════════
   #  Windows → SwissQRScanner.exe
   # ════════════════════════════════════════════════════════
@@ -18,36 +18,39 @@ jobs:
     runs-on: windows-2022
     steps:
       - uses: actions/checkout@v4.2.2
-
+ 
       - name: Java 21 mit JavaFX
         uses: actions/setup-java@v4.7.0
         with:
           java-version: ${{ env.JAVA_VERSION }}
           distribution: 'liberica'
           java-package: 'jdk+fx'
-
+ 
       - name: Maven Build (Fat JAR)
         run: mvn -B package -q
-
-      - name: Native EXE mit jpackage
+ 
+      - name: Portable App mit jpackage (app-image)
         run: |
           jpackage `
             --input target `
             --name SwissQRScanner `
             --main-jar SwissQRScanner-1.0.0.jar `
             --main-class ch.qrscanner.Main `
-            --type exe `
-            --win-console `
+            --type app-image `
             --app-version 1.0.0 `
             --dest dist-win
         shell: pwsh
-
+ 
+      - name: ZIP erstellen
+        run: Compress-Archive -Path dist-win\SwissQRScanner -DestinationPath dist-win\SwissQRScanner-Windows-Portable.zip
+        shell: pwsh
+ 
       - uses: actions/upload-artifact@v4.6.2
         with:
           name: SwissQRScanner-Windows
-          path: dist-win\*.exe
+          path: dist-win\SwissQRScanner-Windows-Portable.zip
           retention-days: 30
-
+ 
   # ════════════════════════════════════════════════════════
   #  macOS → SwissQRScanner.dmg
   # ════════════════════════════════════════════════════════
@@ -55,17 +58,17 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4.2.2
-
+ 
       - name: Java 21 mit JavaFX
         uses: actions/setup-java@v4.7.0
         with:
           java-version: ${{ env.JAVA_VERSION }}
           distribution: 'liberica'
           java-package: 'jdk+fx'
-
+ 
       - name: Maven Build (Fat JAR)
         run: mvn -B package -q
-
+ 
       - name: Native App mit jpackage
         run: |
           jpackage \
@@ -76,13 +79,13 @@ jobs:
             --type dmg \
             --app-version 1.0.0 \
             --dest dist-mac
-
+ 
       - uses: actions/upload-artifact@v4.6.2
         with:
           name: SwissQRScanner-macOS
           path: dist-mac/*.dmg
           retention-days: 30
-
+ 
   # ════════════════════════════════════════════════════════
   #  Linux → SwissQRScanner.deb
   # ════════════════════════════════════════════════════════
@@ -90,17 +93,17 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4.2.2
-
+ 
       - name: Java 21 mit JavaFX
         uses: actions/setup-java@v4.7.0
         with:
           java-version: ${{ env.JAVA_VERSION }}
           distribution: 'liberica'
           java-package: 'jdk+fx'
-
+ 
       - name: Maven Build (Fat JAR)
         run: mvn -B package -q
-
+ 
       - name: Native Paket mit jpackage
         run: |
           jpackage \
@@ -111,7 +114,7 @@ jobs:
             --type deb \
             --app-version 1.0.0 \
             --dest dist-linux
-
+ 
       - uses: actions/upload-artifact@v4.6.2
         with:
           name: SwissQRScanner-Linux
